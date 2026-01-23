@@ -12,21 +12,24 @@
 
 Use the **shell script** for quick quotes in terminal. Use **Node.js version** for programmatic access + image generation.
 
-## Install
+## Install (CLI Version)
+
+The one-liner installs the **shell CLI script** (`office-quotes`), not the Node.js version.
 
 **One-liner:**
 ```bash
 curl -sSL https://raw.githubusercontent.com/gumadeiras/office-quotes-cli/master/install.sh | bash
 ```
 
-**Or manually:**
-```bash
-git clone https://github.com/gumadeiras/office-quotes-cli.git
-ln -sf ~/office-quotes-cli/office-quotes ~/bin/office-quotes
-office-quotes
-```
+This installs `office-quotes` to `~/.local/bin` which outputs plain text.
 
 Requires: `jq` and `curl`
+
+**For the Node.js version** (`office-quotes.js` with JSON + image support):
+```bash
+git clone https://github.com/gumadeiras/office-quotes-cli.git
+node office-quotes-cli/office-quotes.js --mode api --theme dark
+```
 
 ## Shell Script Usage
 
