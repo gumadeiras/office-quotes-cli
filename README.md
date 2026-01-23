@@ -2,9 +2,6 @@
 
 > The Office quotes CLI — offline mode with 326 quotes, or online mode with SVG cards, character avatars, and full episode metadata.
 
-[![GitHub stars](https://img.shields.io/github/stars/gumadeiras/office-quotes-cli)](https://github.com/gumadeiras/office-quotes-cli)
-[![GitHub license](https://img.shields.io/github/license/gumadeiras/office-quotes-cli)](https://github.com/gumadeiras/office-quotes-cli)
-
 ## Install
 
 ```bash
