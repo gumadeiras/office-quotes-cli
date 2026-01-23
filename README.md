@@ -4,6 +4,12 @@
 
 ## Install
 
+**One-liner:**
+```bash
+curl -sSL https://raw.githubusercontent.com/gumadeiras/office-quotes-cli/master/install.sh | bash
+```
+
+**Or manually:**
 ```bash
 git clone https://github.com/gumadeiras/office-quotes-cli.git
 ln -sf ~/office-quotes-cli/office-quotes ~/bin/office-quotes
