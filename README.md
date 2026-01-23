@@ -1,6 +1,6 @@
 # 🎬 office-quotes
 
-> The Office quotes CLI — offline mode (326 quotes) or online mode with SVG cards, character avatars & episode data.
+> The Office quotes CLI — offline mode (326 quotes) or online mode with SVG cards, character avatars & episode data. Node.js version supports PNG/JPG/WebP conversion.
 
 ## Two Versions
 
