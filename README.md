@@ -2,6 +2,16 @@
 
 > The Office quotes CLI — offline mode (326 quotes) or online mode with SVG cards, character avatars & episode data.
 
+## Two Versions
+
+| Feature | `office-quotes` (shell) | `office-quotes.js` (Node.js) |
+|---------|------------------------|------------------------------|
+| Output | Plain text | JSON |
+| Image conversion | ❌ | ✅ (Playwright) |
+| Dependencies | `jq`, `curl` | Node.js, Playwright |
+
+Use the **shell script** for quick quotes in terminal. Use **Node.js version** for programmatic access + image generation.
+
 ## Install
 
 **One-liner:**
@@ -18,38 +28,68 @@ office-quotes
 
 Requires: `jq` and `curl`
 
-## Usage
+## Shell Script Usage
 
 ### ⚡ Offline Mode
 ```bash
-office-quotes                     # Random quote
-office-quotes -q                  # Quote only
-office-quotes list dwight         # By character
-office-quotes search "bears"      # Search
+$ office-quotes
+Michael Scott: Dwight, you ignorant slut!
+
+$ office-quotes -q
+Bears. Beets. Battlestar Galactica.
+
+$ office-quotes search "bears"
+[Jim Halpert]: Bears. Beets. Battlestar Galactica.
+
+$ office-quotes list dwight | head -3
+Dwight Schrute: Whenever I'm about to do something...
+Dwight Schrute: How would I describe myself?...
+Dwight Schrute: 'R' is among the most menacing of sounds...
 ```
 
 ### 🌐 Online Mode
 ```bash
-office-quotes api random          # SVG card
-office-quotes api random --light  # Light theme
-office-quotes api json            # JSON + avatar
-office-quotes --episode 3/10      # Episode info
+$ office-quotes api random
+<SVG card with quote rendered as image>
+
+$ office-quotes api random --image
+https://officeapi.akashrajpurohit.com/quote/random?responseType=svg&mode=dark&width=400&height=200
+
+$ office-quotes api random --light --width 600
+<Light theme SVG, 600px wide>
+
+$ office-quotes --episode 3/10 | jq '.title'
+"A Benihana Christmas"
+
+$ office-quotes api json | jq '.character'
+"Michael Scott"
 ```
 
-## JavaScript Examples
+## Node.js Script Usage (`office-quotes.js`)
 
-```javascript
-// Run as CLI script
+```bash
+# CLI usage (outputs JSON)
 node office-quotes.js --mode api --theme dark --format svg
 
-// Import in your Node.js project
+# Output example:
+{
+  "quote": "Would I rather be feared or loved? Easy. Both.",
+  "character": "Michael Scott",
+  "imagePath": "/tmp/office_quote_123.svg",
+  "format": "svg",
+  "svgUrl": "..."
+}
+```
+
+### In Node.js Projects
+```javascript
 const { execSync } = require('child_process');
 
 // Get a random quote
 const result = JSON.parse(execSync('node /path/to/office-quotes.js').toString());
 console.log(`${result.character}: "${result.quote}"`);
 
-// Get SVG image path (requires Playwright)
+// Get PNG image path (requires Playwright)
 const svgResult = JSON.parse(execSync('node office-quotes.js --mode api --theme light --format png').toString());
 console.log('Image saved to:', svgResult.imagePath);
 ```
@@ -71,8 +111,4 @@ console.log('Image saved to:', svgResult.imagePath);
 
 ---
 
-*MIT License* 
-
->Would I rather be feared or loved? Easy. Both. I want people to be afraid of how much they love me. - Michael Scott
-
-🐧
+*MIT License — "Would I rather be feared or loved? Easy. Both."* 🐧
