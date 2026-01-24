@@ -19,17 +19,24 @@ TEMP_DIR=$(mktemp -d)
 # Clone repo
 git clone --quiet --depth 1 "${REPO_URL}" "${TEMP_DIR}/office-quotes-cli"
 
-# Symlink
+# Copy executable (instead of symlink to temp dir)
 rm -f "${INSTALL_DIR}/${BIN_NAME}"
-ln -sf "${TEMP_DIR}/office-quotes-cli/office-quotes" "${INSTALL_DIR}/${BIN_NAME}"
+cp "${TEMP_DIR}/office-quotes-cli/office-quotes" "${INSTALL_DIR}/${BIN_NAME}"
+chmod +x "${INSTALL_DIR}/${BIN_NAME}"
 
 # Cleanup
 rm -rf "${TEMP_DIR}"
 
-# Ensure in PATH
+# PATH check - add to both bashrc and zshrc if they exist
 if [[ ":${PATH}:" != *":${INSTALL_DIR}:"* ]]; then
-    echo "⚠️  Add ${INSTALL_DIR} to your PATH:"
-    echo "   echo 'export PATH=\"${INSTALL_DIR}:\$PATH\"' >> ~/.bashrc"
+    echo "⚠️  Adding ${INSTALL_DIR} to PATH..."
+    for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
+        if [ -f "$rc" ]; then
+            if ! grep -q "${INSTALL_DIR}" "$rc" 2>/dev/null; then
+                echo "export PATH=\"${INSTALL_DIR}:\$PATH\"" >> "$rc"
+            fi
+        fi
+    done
 fi
 
 echo "✅ Installed! Run: office-quotes"
