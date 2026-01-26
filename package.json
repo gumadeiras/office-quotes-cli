@@ -8,7 +8,8 @@
   },
   "scripts": {
     "start": "node office-quotes.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "postinstall": "npx playwright install chromium"
   },
   "repository": {
     "type": "git",
@@ -35,5 +36,10 @@
   "homepage": "https://github.com/gumadeiras/office-quotes-cli#readme",
   "dependencies": {
     "playwright": "^1.58.0"
+  },
+  "devDependencies": {
+    "eslint": "^9.19.0",
+    "image-size": "^1.1.1",
+    "jest": "^29.7.0"
   }
 }

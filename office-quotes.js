@@ -8,48 +8,55 @@
 
 const API_BASE = "https://officeapi.akashrajpurohit.com";
 const fs = require('fs');
-// const { execSync } = require('child_process'); // Unused
+const path = require('path');
 
 // Check for Playwright
 let playwright;
 try {
   playwright = require('playwright');
 } catch (e) {
-  console.error('Playwright not installed. Run: npm install playwright && npx playwright install chromium');
-  process.exit(1);
+  // Playwright is optional if not converting images, specific check done later
 }
 
-// Parse arguments
-const args = process.argv.slice(2);
-let command = null;
-let mode = "offline";
-let theme = "dark";
-let outputFormat = "svg"; // svg, png, jpg, webp
-let commandArgs = [];
+function parseArgs(args) {
+  let command = null;
+  let mode = "offline";
+  let theme = "dark";
+  let outputFormat = "svg";
+  let commandArgs = [];
+  let showHelp = false;
 
-// Basic argument parser to separate command from flags
-let showHelp = false;
-
-for (let i = 0; i < args.length; i++) {
-  const arg = args[i];
-  if (arg === "-h" || arg === "--help") {
-    showHelp = true;
-  } else if (arg.startsWith("--")) {
-    if (arg === "--mode" && args[i + 1]) {
-      mode = args[++i];
-    } else if (arg === "--theme" && args[i + 1]) {
-      theme = args[++i];
-    } else if (arg === "--format" && args[i + 1]) {
-      outputFormat = args[++i].toLowerCase();
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === "-h" || arg === "--help") {
+      showHelp = true;
+    } else if (arg.startsWith("--")) {
+      if (arg === "--mode" && args[i + 1]) {
+        mode = args[++i];
+      } else if (arg === "--theme" && args[i + 1]) {
+        theme = args[++i];
+      } else if (arg === "--format" && args[i + 1]) {
+        outputFormat = args[++i].toLowerCase();
+      }
+    } else if (!command) {
+      command = arg;
+    } else {
+      commandArgs.push(arg);
     }
-  } else if (!command) {
-    command = arg;
-  } else {
-    commandArgs.push(arg);
   }
-}
 
-if (command === "help") showHelp = true;
+  if (command === "help") showHelp = true;
+  if (command === "api") mode = "api";
+
+  // Force API mode if output format is specified (since offline mode has no images)
+  // We check if outputFormat was changed from default 'svg'
+  if (outputFormat !== "svg" && mode !== "api") {
+    console.error("Note: switching to API mode because --format was specified (offline mode does not support images).");
+    mode = "api";
+  }
+
+  return { command, mode, theme, outputFormat, commandArgs, showHelp };
+}
 
 function printHelp() {
   console.log(`
@@ -70,7 +77,7 @@ Options:
   -h, --help          Show this help
   --mode [api|offline] Mode to run in (default: offline)
   --theme [dark|light] Theme for SVG (api mode only, default: dark)
-  --format [fmt]      Output image format: svg, png, jpg, webp (api mode only, default: svg)
+  --format [fmt]      Output image format: svg, png, jpg (api mode only, default: svg)
 
 Examples:
   office-quotes                     # Random local quote
@@ -82,9 +89,9 @@ Examples:
 
 function loadQuotes() {
   const paths = [
-    require('path').join(__dirname, 'data', 'quotes.json'),
-    require('path').join(process.cwd(), 'data', 'quotes.json'),
-    require('path').join(process.env.HOME || process.env.USERPROFILE, '.local/share/office-quotes-cli/data/quotes.json')
+    path.join(__dirname, 'data', 'quotes.json'),
+    path.join(process.cwd(), 'data', 'quotes.json'),
+    path.join(process.env.HOME || process.env.USERPROFILE, '.local/share/office-quotes-cli/data/quotes.json')
   ];
 
   for (const p of paths) {
@@ -99,31 +106,27 @@ function loadQuotes() {
   return null;
 }
 
-// Command Implementations
 function getQuotesOrError() {
   const quotes = loadQuotes();
   if (!quotes) {
-    console.error("Error: Could not find quotes.json in any expected location.");
-    process.exit(1);
+    throw new Error("Could not find quotes.json in any expected location.");
   }
   return quotes;
 }
 
-async function searchQuotes(query) {
+function searchQuotes(query) {
   if (!query) {
-    console.error("Usage: office-quotes.js search <query>");
-    return;
+    throw new Error("Usage: office-quotes.js search <query>");
   }
   const quotes = getQuotesOrError();
   const results = quotes
     .filter(q => q.content.toLowerCase().includes(query.toLowerCase()))
     .map(q => `[${q.character}]: ${q.content}`);
 
-  if (results.length === 0) console.log("No matches found.");
-  else results.forEach(r => console.log(r));
+  return results;
 }
 
-async function listQuotes(character) {
+function listQuotes(character) {
   const quotes = getQuotesOrError();
   let results;
   if (character) {
@@ -131,29 +134,40 @@ async function listQuotes(character) {
   } else {
     results = quotes;
   }
-  results.forEach(q => console.log(`${q.character}: ${q.content}`));
+  return results.map(q => `${q.character}: ${q.content}`);
 }
 
-async function listCharacters() {
+function listCharacters() {
   const quotes = getQuotesOrError();
   const chars = [...new Set(quotes.map(q => q.character))].sort();
-  chars.forEach(c => console.log(c));
+  return chars;
 }
 
-async function countQuotes() {
+function countQuotes() {
   const quotes = getQuotesOrError();
-  console.log(`Total quotes: ${quotes.length}`);
+  return quotes.length;
 }
 
-async function getOfflineQuote() {
-  const quotes = getQuotesOrError();
+function getOfflineQuote(quotesInput) {
+  const quotes = quotesInput || getQuotesOrError();
+  if (!quotes || quotes.length === 0) {
+    throw new Error("No quotes available in offline database.");
+  }
   const randomIndex = Math.floor(Math.random() * quotes.length);
   const quote = quotes[randomIndex];
   return { quote: quote.content, character: quote.character };
 }
 
 async function renderWithPlaywright(svgPath, outputFormat) {
+  if (!playwright) {
+    throw new Error('Playwright not installed. Run: npm install playwright && npx playwright install chromium');
+  }
   const ext = outputFormat.toLowerCase();
+
+  if (ext === 'webp') {
+    throw new Error("WebP format is not supported. Please use png or jpg.");
+  }
+
   const outputPath = svgPath.replace(/\.[^.]+$/, `.${ext}`);
 
   if (ext === 'svg') {
@@ -182,16 +196,17 @@ ${svgContent}
   const browser = await playwright.chromium.launch();
   const page = await browser.newPage({ viewport: { width: 520, height: 420 } });
 
-  await page.goto('file://' + htmlPath);
-  await page.waitForTimeout(1500);
+  try {
+    await page.goto('file://' + htmlPath);
+    await page.waitForTimeout(1500);
 
-  // Screenshot the SVG element
-  await page.locator('svg').screenshot({ path: outputPath });
-
-  await browser.close();
-
-  // Cleanup HTML
-  fs.unlinkSync(htmlPath);
+    // Screenshot the SVG element
+    await page.locator('svg').screenshot({ path: outputPath });
+  } finally {
+    await browser.close();
+    // Cleanup HTML
+    if (fs.existsSync(htmlPath)) fs.unlinkSync(htmlPath);
+  }
 
   return outputPath;
 }
@@ -210,17 +225,24 @@ async function convertImage(svgPath, outputFormat) {
   }
 }
 
-async function getApiQuote() {
+async function getApiQuote(options = {}) {
+  const { theme = "dark", outputFormat = "svg" } = options;
   const svgUrl = `${API_BASE}/quote/random?responseType=svg&mode=${theme}&width=500&height=300`;
   const jsonUrl = `${API_BASE}/quote/random?responseType=json`;
 
   try {
     // Get JSON for quote text
     const jsonRes = await fetch(jsonUrl);
+    if (!jsonRes.ok) {
+      throw new Error(`API error: ${jsonRes.status} ${jsonRes.statusText}`);
+    }
     const data = await jsonRes.json();
 
     // Fetch and save SVG
     const svgRes = await fetch(svgUrl);
+    if (!svgRes.ok) {
+      throw new Error(`API image error: ${svgRes.status}`);
+    }
     const svgText = await svgRes.text();
 
     // Check for empty response
@@ -228,13 +250,13 @@ async function getApiQuote() {
       return {
         quote: data.quote,
         character: data.character,
-        error: "API returned empty image - please try again",
+        error: "API returned empty/invalid image - please try again later",
         avatarUrl: data.character_avatar_url
       };
     }
 
     const timestamp = Date.now();
-    const tempSvg = require('path').join(process.cwd(), `office_quote_${timestamp}.svg`);
+    const tempSvg = path.join(process.cwd(), `office_quote_${timestamp}.svg`);
     fs.writeFileSync(tempSvg, svgText);
 
     if (outputFormat !== 'svg') {
@@ -269,47 +291,67 @@ async function getApiQuote() {
       avatarUrl: data.character_avatar_url
     };
   } catch (error) {
-    return { error: error.message };
+    return { error: `Failed to fetch quote from API: ${error.message}` };
   }
 }
 
 async function main() {
+  const { command, mode, theme, outputFormat, commandArgs, showHelp } = parseArgs(process.argv.slice(2));
+
   if (showHelp) {
     printHelp();
     return;
   }
-  // Handle commands
-  if (command === "search") {
-    await searchQuotes(commandArgs.join(" "));
-    return;
-  }
-  if (command === "list") {
-    await listQuotes(commandArgs.join(" "));
-    return;
-  }
-  if (command === "characters") {
-    await listCharacters();
-    return;
-  }
-  if (command === "count") {
-    await countQuotes();
-    return;
-  }
 
-  if (command === "api") {
-    mode = "api";
-  }
+  try {
+    if (command === "search") {
+      const results = searchQuotes(commandArgs.join(" "));
+      if (results.length === 0) console.log("No matches found.");
+      else results.forEach(r => console.log(r));
+      return;
+    }
+    if (command === "list") {
+      const results = listQuotes(commandArgs.join(" "));
+      results.forEach(r => console.log(r));
+      return;
+    }
+    if (command === "characters") {
+      const results = listCharacters();
+      results.forEach(c => console.log(c));
+      return;
+    }
+    if (command === "count") {
+      console.log(`Total quotes: ${countQuotes()}`);
+      return;
+    }
 
-  // Handle default random mode (offline or api)
-  let result;
-  if (mode === "api") {
-    result = await getApiQuote();
-  } else {
-    // defaults to offline random
-    result = await getOfflineQuote();
-  }
+    let result;
+    if (mode === "api") {
+      result = await getApiQuote({ theme, outputFormat });
+    } else {
+      result = getOfflineQuote();
+    }
 
-  console.log(JSON.stringify(result, null, 2));
+    console.log(JSON.stringify(result, null, 2));
+
+  } catch (err) {
+    console.error(err.message);
+    process.exit(1);
+  }
 }
 
-main().catch(console.error);
+if (require.main === module) {
+  main().catch(console.error);
+}
+
+module.exports = {
+  parseArgs,
+  loadQuotes,
+  searchQuotes,
+  listQuotes,
+  listCharacters,
+  countQuotes,
+  getOfflineQuote,
+  getApiQuote,
+  convertImage
+};

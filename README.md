@@ -119,4 +119,8 @@ console.log('Image saved to:', svgResult.imagePath);
 
 ---
 
-*MIT License — "Would I rather be feared or loved? Easy. Both. I want people to be afraid of how much they love me." — Michael Scott* 🐧
+*"Would I rather be feared or loved? Easy. Both. I want people to be afraid of how much they love me." — Michael Scott*
+
+*MIT License*
+
+🐧
