@@ -233,7 +233,8 @@ async function getApiQuote() {
       };
     }
 
-    const tempSvg = `/tmp/office_quote_${Date.now()}.svg`;
+    const timestamp = Date.now();
+    const tempSvg = require('path').join(process.cwd(), `office_quote_${timestamp}.svg`);
     fs.writeFileSync(tempSvg, svgText);
 
     if (outputFormat !== 'svg') {
@@ -293,6 +294,10 @@ async function main() {
   if (command === "count") {
     await countQuotes();
     return;
+  }
+
+  if (command === "api") {
+    mode = "api";
   }
 
   // Handle default random mode (offline or api)
