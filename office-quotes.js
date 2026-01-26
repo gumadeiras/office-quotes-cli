@@ -14,9 +14,13 @@ const os = require('os');
 // Check for Playwright
 let playwright;
 try {
-  playwright = require('playwright');
+  playwright = require('playwright-chromium');
 } catch {
-  // Playwright is optional if not converting images
+  try {
+    playwright = require('playwright');
+  } catch {
+    // Playwright is optional if not converting images
+  }
 }
 
 function parseArgs(args) {
