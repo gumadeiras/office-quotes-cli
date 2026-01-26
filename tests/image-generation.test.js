@@ -87,6 +87,6 @@ describe('Image Generation (Integration)', () => {
         // Should return error object for unsupported format
         expect(typeof output).toBe('object');
         expect(output.status).toBe('error');
-        expect(output.error).toContain('WebP format is not supported');
+        expect(output.error).toContain('Supported formats: png, jpg, svg.');
     });
 });

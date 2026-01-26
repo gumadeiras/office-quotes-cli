@@ -3,12 +3,13 @@
 /**
  * office-quotes CLI tool for Clawdbot
  * 
- * Usage: node office-quotes.js [--mode offline|api] [--theme dark|light] [--format png|jpg|webp]
+ * Usage: node office-quotes.js [--mode offline|api] [--source local|api] [--theme dark|light] [--format png|jpg]
  */
 
 const API_BASE = "https://officeapi.akashrajpurohit.com";
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 
 // Check for Playwright
 let playwright;
@@ -22,7 +23,7 @@ function parseArgs(args) {
   let command = null;
   let mode = "offline";
   let theme = "dark";
-  let outputFormat = "svg";
+  let outputFormat = null; // Default null means no image requested
   let commandArgs = [];
   let showHelp = false;
 
@@ -31,8 +32,9 @@ function parseArgs(args) {
     if (arg === "-h" || arg === "--help") {
       showHelp = true;
     } else if (arg.startsWith("--")) {
-      if (arg === "--mode" && args[i + 1]) {
-        mode = args[++i];
+      if ((arg === "--mode" || arg === "--source") && args[i + 1]) {
+        let val = args[++i].toLowerCase();
+        mode = (val === 'local' || val === 'offline') ? 'offline' : 'api';
       } else if (arg === "--theme" && args[i + 1]) {
         theme = args[++i];
       } else if (arg === "--format" && args[i + 1]) {
@@ -49,11 +51,14 @@ function parseArgs(args) {
   if (command === "api") mode = "api";
 
   // Force API mode if output format is specified (since offline mode has no images)
-  // We check if outputFormat was changed from default 'svg'
-  if (outputFormat !== "svg" && mode !== "api") {
+  if (outputFormat && mode !== "api") {
     console.error("Note: switching to API mode because --format was specified (offline mode does not support images).");
     mode = "api";
   }
+
+  // Set default output format if in API mode but no format specified.
+  // We keep it null unless they explicitly asked for it or used a command that implies it.
+  // Actually, let's keep it null. If it's null, getApiQuote won't save images.
 
   return { command, mode, theme, outputFormat, commandArgs, showHelp };
 }
@@ -70,20 +75,21 @@ Commands:
   characters          List all characters (local)
   count               Show quote count
   search <query>      Search quotes (local)
-  api                 Fetch from online API (SVG cards + metadata)
+  api                 Fetch from online API
   help                Show this help
 
 Options:
   -h, --help          Show this help
-  --mode [api|offline] Mode to run in (default: offline)
-  --theme [dark|light] Theme for SVG (api mode only, default: dark)
-  --format [fmt]      Output image format: svg, png, jpg (api mode only, default: svg)
+  --source [local|api] Source to fetch from (default: local)
+  --theme [dark|light] Theme for SVG (api mode with image only, default: dark)
+  --format [png|jpg]   Output image format. If specified, saves image to /tmp/
 
 Examples:
   office-quotes                     # Random local quote
   office-quotes list dwight         # List Dwight quotes
   office-quotes search "bears"      # Search quotes
-  office-quotes api --format png    # Get random quote as PNG image
+  office-quotes --source api        # Get random quote from API (no image)
+  office-quotes api --format png    # Get random quote + PNG image
 `);
 }
 
@@ -91,7 +97,7 @@ function loadQuotes() {
   const paths = [
     path.join(__dirname, 'data', 'quotes.json'),
     path.join(process.cwd(), 'data', 'quotes.json'),
-    path.join(process.env.HOME || process.env.USERPROFILE, '.local/share/office-quotes-cli/data/quotes.json')
+    path.join(os.homedir(), '.local/share/office-quotes-cli/data/quotes.json')
   ];
 
   for (const p of paths) {
@@ -116,7 +122,7 @@ function getQuotesOrError() {
 
 function searchQuotes(query) {
   if (!query) {
-    throw new Error("Usage: office-quotes.js search <query>");
+    throw new Error("Usage: office-quotes search <query>");
   }
   const quotes = getQuotesOrError();
   const results = quotes
@@ -164,8 +170,8 @@ async function renderWithPlaywright(svgPath, outputFormat) {
   }
   const ext = outputFormat.toLowerCase();
 
-  if (ext === 'webp') {
-    throw new Error("WebP format is not supported. Please use png or jpg.");
+  if (ext !== 'png' && ext !== 'jpg' && ext !== 'jpeg' && ext !== 'svg') {
+    throw new Error("Supported formats: png, jpg, svg.");
   }
 
   const outputPath = svgPath.replace(/\.[^.]+$/, `.${ext}`);
@@ -212,12 +218,6 @@ ${svgContent}
 }
 
 async function convertImage(svgPath, outputFormat) {
-  const ext = outputFormat.toLowerCase();
-
-  if (ext === 'svg') {
-    return svgPath;
-  }
-
   try {
     return await renderWithPlaywright(svgPath, outputFormat);
   } catch (error) {
@@ -226,8 +226,7 @@ async function convertImage(svgPath, outputFormat) {
 }
 
 async function getApiQuote(options = {}) {
-  const { theme = "dark", outputFormat = "svg" } = options;
-  const svgUrl = `${API_BASE}/quote/random?responseType=svg&mode=${theme}&width=500&height=300`;
+  const { theme = "dark", outputFormat = null } = options;
   const jsonUrl = `${API_BASE}/quote/random?responseType=json`;
 
   try {
@@ -238,14 +237,26 @@ async function getApiQuote(options = {}) {
     }
     const data = await jsonRes.json();
 
-    // Fetch and save SVG
+    // If no format requested, just return the JSON data
+    if (!outputFormat) {
+      return {
+        quote: data.quote,
+        character: data.character,
+        character_avatar_url: data.character_avatar_url,
+        episode: data.episode,
+        season: data.season
+      };
+    }
+
+    // Otherwise, fetch and save image
+    const svgUrl = `${API_BASE}/quote/random?responseType=svg&mode=${theme}&width=500&height=300`;
     const svgRes = await fetch(svgUrl);
     if (!svgRes.ok) {
       throw new Error(`API image error: ${svgRes.status}`);
     }
     const svgText = await svgRes.text();
 
-    // Check for empty response
+    // Check for empty/invalid response
     if (!svgText || svgText.trim().length < 100) {
       return {
         quote: data.quote,
@@ -256,10 +267,10 @@ async function getApiQuote(options = {}) {
     }
 
     const timestamp = Date.now();
-    const tempSvg = path.join(process.cwd(), `office_quote_${timestamp}.svg`);
+    const tempSvg = path.join(os.tmpdir(), `office_quote_${timestamp}.svg`);
     fs.writeFileSync(tempSvg, svgText);
 
-    if (outputFormat !== 'svg') {
+    if (outputFormat && outputFormat !== 'svg') {
       // Convert using Playwright
       const conversionResult = await convertImage(tempSvg, outputFormat);
       fs.unlinkSync(tempSvg); // Clean up SVG
@@ -287,7 +298,6 @@ async function getApiQuote(options = {}) {
       character: data.character,
       imagePath: tempSvg,
       format: 'svg',
-      svgUrl: svgUrl,
       avatarUrl: data.character_avatar_url
     };
   } catch (error) {

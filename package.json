@@ -9,6 +9,7 @@
   "scripts": {
     "start": "node office-quotes.js",
     "test": "jest",
+    "lint": "eslint .",
     "postinstall": "npx playwright install chromium"
   },
   "repository": {

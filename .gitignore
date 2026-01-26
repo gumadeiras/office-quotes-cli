@@ -1,2 +1,10 @@
+node_modules
 .DS_Store
-/node_modules
+coverage
+tests/temp_images
+office_quote_*.svg
+office_quote_*.png
+office_quote_*.jpg
+office_quote_*.html
+.npm
+package-lock.json
