@@ -29,6 +29,7 @@ office-quotes characters     # Who said what?
 
 ### 🌐 The "Fancy" Mode (API)
 Connect to the Dunder Mifflin cloud for cards and metadata.
+*Note: Image generation is only available for random quotes sourced from the API.*
 ```bash
 office-quotes --source api           # Fresh quote from the cloud
 office-quotes --format png           # Boom! PNG card (saved to /tmp/)

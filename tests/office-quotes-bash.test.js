@@ -10,8 +10,8 @@ describe('office-quotes (Bash version)', () => {
     beforeAll(() => {
         try {
             fs.chmodSync(BASH_SCRIPT, '755');
-        } catch (e) {
-            console.error('Could not chmod script:', e);
+        } catch {
+            console.error('Could not chmod script');
         }
     });
 
@@ -67,7 +67,7 @@ describe('office-quotes (Bash version)', () => {
                 const json = JSON.parse(output);
                 expect(json).toHaveProperty('quote');
                 expect(json).toHaveProperty('character');
-            } catch (e) {
+            } catch {
                 // If API is down, it should return the error JSON defined in the script
                 expect(output).toContain('"error"');
             }

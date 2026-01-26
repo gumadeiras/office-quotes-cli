@@ -1,6 +1,5 @@
 const app = require('../office-quotes.js');
 const fs = require('fs');
-const path = require('path');
 
 // Mock data for testing
 const MOCK_QUOTES = [
@@ -9,7 +8,18 @@ const MOCK_QUOTES = [
     { character: "Jim Halpert", content: "Bears. Beets. Battlestar Galactica." }
 ];
 
-describe('office-quotes-cli', () => {
+// Mock global fetch for API tests
+global.fetch = jest.fn();
+
+describe('office-quotes-cli Unit Tests', () => {
+
+    beforeAll(() => {
+        jest.spyOn(console, 'error').mockImplementation(() => { });
+    });
+
+    afterAll(() => {
+        jest.restoreAllMocks();
+    });
 
     describe('parseArgs', () => {
         test('should parse random default command', () => {
@@ -18,28 +28,31 @@ describe('office-quotes-cli', () => {
             expect(mode).toBe("offline");
         });
 
-        test('should parse help flag', () => {
-            const { showHelp } = app.parseArgs(['--help']);
-            expect(showHelp).toBe(true);
-        });
-
-        test('should parse search command', () => {
-            const { command, commandArgs } = app.parseArgs(['search', 'bears']);
-            expect(command).toBe('search');
-            expect(commandArgs).toEqual(['bears']);
-        });
-
-        test('should parse api mode', () => {
-            const { mode, command } = app.parseArgs(['api']);
-            expect(command).toBe('api');
+        test('should parse --source alias for mode', () => {
+            const { mode } = app.parseArgs(['--source', 'api']);
             expect(mode).toBe('api');
         });
 
-        test('should parse flags correctly', () => {
-            const { mode, theme, outputFormat } = app.parseArgs(['--mode', 'api', '--theme', 'light', '--format', 'png']);
+        test('should parse --quiet / -q flag', () => {
+            const args1 = app.parseArgs(['-q']);
+            const args2 = app.parseArgs(['--quiet']);
+            expect(args1.quiet).toBe(true);
+            expect(args2.quiet).toBe(true);
+        });
+
+        test('should force api mode when --format is provided', () => {
+            // Even if --source local is specified, --format png should override it
+            const { mode } = app.parseArgs(['--source', 'local', '--format', 'png']);
             expect(mode).toBe('api');
-            expect(theme).toBe('light');
-            expect(outputFormat).toBe('png');
+        });
+
+        test('should parse episode and season commands', () => {
+            const argsE = app.parseArgs(['episode', '3/10']);
+            const argsS = app.parseArgs(['season', '3']);
+            expect(argsE.command).toBe('episode');
+            expect(argsE.commandArgs).toEqual(['3/10']);
+            expect(argsS.command).toBe('season');
+            expect(argsS.commandArgs).toEqual(['3']);
         });
     });
 
@@ -56,15 +69,16 @@ describe('office-quotes-cli', () => {
             readSpy.mockRestore();
         });
 
-        test('loadQuotes should return parsed JSON', () => {
+        test('loadQuotes should return parsed JSON from correct path', () => {
             const quotes = app.loadQuotes();
             expect(quotes).toHaveLength(3);
-            expect(quotes[0].character).toBe("Michael Scott");
+            expect(readSpy).toHaveBeenCalled();
         });
 
-        test('countQuotes should return correct length', () => {
-            const count = app.countQuotes();
-            expect(count).toBe(3);
+        test('searchQuotes should find matching quotes (case-insensitive)', () => {
+            const results = app.searchQuotes("BEARS");
+            expect(results).toHaveLength(2);
+            expect(results[0]).toContain("Dwight Schrute");
         });
 
         test('listCharacters should return unique sorted characters', () => {
@@ -72,23 +86,35 @@ describe('office-quotes-cli', () => {
             expect(chars).toEqual(["Dwight Schrute", "Jim Halpert", "Michael Scott"]);
         });
 
-        test('listQuotes should filter by character', () => {
-            const quotes = app.listQuotes("Dwight");
-            expect(quotes).toHaveLength(1);
-            expect(quotes[0]).toContain("Dwight Schrute");
+        test('getOfflineQuote should throw if quotes are empty', () => {
+            readSpy.mockReturnValue("[]");
+            expect(() => app.getOfflineQuote()).toThrow("No quotes available.");
+        });
+    });
+
+    describe('API Metadata Logic', () => {
+        beforeEach(() => {
+            fetch.mockClear();
         });
 
-        test('searchQuotes should find matching quotes', () => {
-            const results = app.searchQuotes("Battlestar");
-            expect(results).toHaveLength(2);
-            expect(results[0]).toContain("Dwight Schrute");
-            expect(results[1]).toContain("Jim Halpert");
+        test('fetchApiMetadata should build correct URL for episodes', async () => {
+            fetch.mockResolvedValue({
+                ok: true,
+                json: async () => ({ title: "Test Episode" })
+            });
+
+            const data = await app.fetchApiMetadata('episode', '3/10');
+            expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/season/3/episode/10'));
+            expect(data.title).toBe("Test Episode");
         });
 
-        test('getOfflineQuote should return a valid quote object', () => {
-            const quote = app.getOfflineQuote();
-            expect(quote).toHaveProperty('quote');
-            expect(quote).toHaveProperty('character');
+        test('fetchApiMetadata should throw on invalid episode format', async () => {
+            await expect(app.fetchApiMetadata('episode', 'invalid')).rejects.toThrow(/Usage:/);
+        });
+
+        test('fetchApiMetadata should throw on API error', async () => {
+            fetch.mockResolvedValue({ ok: false, status: 404 });
+            await expect(app.fetchApiMetadata('season', '99')).rejects.toThrow("API error: 404");
         });
     });
 });

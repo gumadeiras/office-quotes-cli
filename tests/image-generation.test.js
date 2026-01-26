@@ -58,8 +58,8 @@ describe('Image Generation (Integration)', () => {
 
         const dimensions = sizeOf(buffer);
         expect(dimensions.type).toBe('png');
-        expect(dimensions.width).toBe(500);
-        expect(dimensions.height).toBe(300);
+        expect(dimensions.width).toBe(1000);
+        expect(dimensions.height).toBe(600);
     }, 30000);
 
     test('should convert to JPG with correct format and dimensions', async () => {
@@ -77,8 +77,8 @@ describe('Image Generation (Integration)', () => {
 
         const dimensions = sizeOf(buffer);
         expect(dimensions.type).toBe('jpg');
-        expect(dimensions.width).toBe(500);
-        expect(dimensions.height).toBe(300);
+        expect(dimensions.width).toBe(1000);
+        expect(dimensions.height).toBe(600);
     }, 30000);
 
     test('should handle unsupported formats elegantly', async () => {

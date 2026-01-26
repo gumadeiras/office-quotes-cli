@@ -23,35 +23,29 @@ office-quotes - The Office quote generator
 
 Usage: office-quotes [command] [options]
 
-Commands (Online + Offline):
+Commands:
   random              Show a random quote (default)
   shuffle             Another random quote
   list [character]    List all local quotes, optionally by character
   characters          List all characters (local)
   count               Show quote count
   search <query>      Search quotes (local)
-  api [random|json]   Fetch from online API (SVG cards + metadata)
+  api [random|json]   Fetch from online API
+  episode S/E         Get episode metadata (API, e.g., 3/10)
+  season S            Get season metadata (API)
 
 Options:
   -h, --help          Show this help
   -q, --quiet         Quote only (local, no character)
-  --image             Get SVG image URL (online mode)
-  --episode S/E       Get episode metadata (e.g., --episode 3/10)
+  --source api|local  Alias for choosing source
+  --image             Get SVG image URL (API mode only)
+  --episode S/E       Alias for episode command
+  --season S          Alias for season command
   --light             Use light theme for SVG (default: dark)
   --width <px>        SVG width (default: 400)
   --height <px>       SVG height (default: 200)
 
-Examples:
-  office-quotes                     # Random local quote
-  office-quotes random              # Same
-  office-quotes -q                  # Quote only
-  office-quotes list dwight         # Dwight quotes
-  office-quotes search "bears"      # Search local quotes
-  office-quotes api random          # Random + SVG card
-  office-quotes api random --image  # Get SVG image URL
-  office-quotes --episode 3/10      # Episode S3E10 metadata
-  office-quotes api random --light  # Light theme SVG
-
+Note: Image features (--image) only work with random quotes from the API.
 EOF
 }
 
@@ -132,14 +126,17 @@ fetch_season() {
   curl -s "${API_BASE}/season/${season}" 2>/dev/null | jq '.' 2>/dev/null || echo '{"error": "Season not found"}'
 }
 
-# Parse arguments
+# Parse primary command/options
 if [[ $# -eq 0 ]]; then
   random_quote_local
   exit 0
 fi
 
-case "$1" in
-  -h|--help)
+CMD="$1"
+shift
+
+case "$CMD" in
+  -h|--help|help)
     show_help
     ;;
   -q|--quiet)
@@ -151,7 +148,7 @@ case "$1" in
     random_quote_local
     ;;
   list)
-    list_quotes_local "${2:-}"
+    list_quotes_local "${1:-}"
     ;;
   characters)
     list_characters_local
@@ -160,37 +157,37 @@ case "$1" in
     count_quotes_local
     ;;
   search)
-    search_quotes_local "${2:-}"
+    search_quotes_local "${1:-}"
     ;;
   api)
-    case "${2:-random}" in
-      random)
-        fetch_api_random "${@:3}"
-        ;;
-      json)
-        fetch_api_random_json
-        ;;
-      *)
-        echo "Unknown api mode: $2"
-        echo "Usage: office-quotes api [random|json]"
-        ;;
+    subcmd="${1:-random}"
+    case "$subcmd" in
+      random) fetch_api_random "${@:2}" ;;
+      json) fetch_api_random_json ;;
+      *) echo "Unknown api mode: $subcmd"; exit 1 ;;
     esac
     ;;
-  --image)
-    fetch_api_random --image "${@:2}"
-    ;;
-  --episode)
-    if [[ "$2" =~ ^([0-9]+)/([0-9]+)$ ]]; then
+  episode|--episode)
+    val="${1:-}"
+    if [[ "$val" =~ ^([0-9]+)/([0-9]+)$ ]]; then
       fetch_episode "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
     else
-      echo "Usage: office-quotes --episode S/E (e.g., 3/10)"
+      echo "Usage: office-quotes episode S/E (e.g., 3/10)"
+      exit 1
     fi
     ;;
-  --season)
-    fetch_season "${2:-1}"
+  season|--season)
+    fetch_season "${1:-1}"
+    ;;
+  --source)
+    if [[ "$1" == "api" ]]; then
+       fetch_api_random_json
+    else
+       random_quote_local
+    fi
     ;;
   *)
-    echo "Unknown command: $1"
+    echo "Unknown command: $CMD"
     echo "Run 'office-quotes --help' for usage"
     exit 1
     ;;
