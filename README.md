@@ -44,7 +44,7 @@ office-quotes --format jpg --theme light # For those who like the light mode
 | --- | --- | --- |
 | **Why?** | Images, JSON, API Power | Speed, Simplicity |
 | **Output** | JSON | Plain Text |
-| **Needs** | Node.js | `jq`, `curl` |
+| **Needs** | Node.js, `playwright` | `jq`, `curl` |
 
 
 ## Credits

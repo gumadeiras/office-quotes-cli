@@ -24,7 +24,7 @@
     "playwright"
   ],
   "author": "gumadeiras",
-  "license": "ISC",
+  "license": "MIT",
   "files": [
     "office-quotes.js",
     "data/quotes.json",
@@ -36,7 +36,7 @@
   },
   "homepage": "https://github.com/gumadeiras/office-quotes-cli#readme",
   "dependencies": {
-    "playwright": "^1.58.0"
+    "playwright-chromium": "^1.58.0"
   },
   "devDependencies": {
     "eslint": "^9.19.0",
