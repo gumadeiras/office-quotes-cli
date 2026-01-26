@@ -55,9 +55,7 @@ office-quotes --format jpg --theme light # For those who like the light mode
 
 ---
 
-<p align="center">
-  <i>"I'm not superstitious, but I am a little stitious."</i> — <b>Michael Scott</b>
-</p>
+*"I'm not superstitious, but I am a little stitious." — __Michael Scott__*
 
 *MIT License.*
 
