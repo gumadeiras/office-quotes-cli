@@ -4,7 +4,7 @@
   "description": "> The Office quotes CLI — offline mode (326 quotes) or online mode with SVG cards, character avatars & episode data. Node.js version supports PNG/JPG/WebP conversion.",
   "main": "office-quotes.js",
   "bin": {
-    "office-quotes-js": "./office-quotes.js"
+    "office-quotes": "office-quotes.js"
   },
   "scripts": {
     "start": "node office-quotes.js",
@@ -14,9 +14,20 @@
     "type": "git",
     "url": "git+https://github.com/gumadeiras/office-quotes-cli.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "the-office",
+    "quotes",
+    "cli",
+    "api",
+    "playwright"
+  ],
+  "author": "gumadeiras",
   "license": "ISC",
+  "files": [
+    "office-quotes.js",
+    "data/quotes.json",
+    "README.md"
+  ],
   "type": "commonjs",
   "bugs": {
     "url": "https://github.com/gumadeiras/office-quotes-cli/issues"

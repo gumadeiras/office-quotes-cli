@@ -13,13 +13,29 @@
 Use the **shell script** for quick quotes in terminal. Use **Node.js version** for programmatic access + image generation.
 
 ## Install
-
-**One-liner (shell CLI):**
+ 
+### Option 1: Shell CLI (Bash/Zsh)
+**One-liner:**
 ```bash
 curl -sSL https://raw.githubusercontent.com/gumadeiras/office-quotes-cli/master/install.sh | bash
 ```
-
 Requires: `jq` and `curl`
+
+### Option 2: Node.js CLI
+**From Source:**
+```bash
+git clone https://github.com/gumadeiras/office-quotes-cli.git
+cd office-quotes-cli
+npm install
+npm link
+```
+Now you can run `office-quotes` from anywhere.
+*Note: This will override the shell script version if both are installed.*
+
+**Dependencies:**
+- Node.js (v14+)
+- Playwright (installed via npm)
+
 
 ## Shell Script Usage
 

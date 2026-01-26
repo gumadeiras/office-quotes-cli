@@ -28,9 +28,13 @@ let outputFormat = "svg"; // svg, png, jpg, webp
 let commandArgs = [];
 
 // Basic argument parser to separate command from flags
+let showHelp = false;
+
 for (let i = 0; i < args.length; i++) {
   const arg = args[i];
-  if (arg.startsWith("--")) {
+  if (arg === "-h" || arg === "--help") {
+    showHelp = true;
+  } else if (arg.startsWith("--")) {
     if (arg === "--mode" && args[i + 1]) {
       mode = args[++i];
     } else if (arg === "--theme" && args[i + 1]) {
@@ -43,6 +47,37 @@ for (let i = 0; i < args.length; i++) {
   } else {
     commandArgs.push(arg);
   }
+}
+
+if (command === "help") showHelp = true;
+
+function printHelp() {
+  console.log(`
+office-quotes - The Office quote generator (Node.js version)
+
+Usage: office-quotes [command] [options]
+
+Commands:
+  random              Show a random quote (default)
+  list [character]    List all local quotes, optionally by character
+  characters          List all characters (local)
+  count               Show quote count
+  search <query>      Search quotes (local)
+  api                 Fetch from online API (SVG cards + metadata)
+  help                Show this help
+
+Options:
+  -h, --help          Show this help
+  --mode [api|offline] Mode to run in (default: offline)
+  --theme [dark|light] Theme for SVG (api mode only, default: dark)
+  --format [fmt]      Output image format: svg, png, jpg, webp (api mode only, default: svg)
+
+Examples:
+  office-quotes                     # Random local quote
+  office-quotes list dwight         # List Dwight quotes
+  office-quotes search "bears"      # Search quotes
+  office-quotes api --format png    # Get random quote as PNG image
+`);
 }
 
 function loadQuotes() {
@@ -238,6 +273,10 @@ async function getApiQuote() {
 }
 
 async function main() {
+  if (showHelp) {
+    printHelp();
+    return;
+  }
   // Handle commands
   if (command === "search") {
     await searchQuotes(commandArgs.join(" "));
