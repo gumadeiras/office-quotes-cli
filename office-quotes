@@ -5,7 +5,16 @@
 # Online mode: akash API (SVG cards + avatars + episode data)
 
 SCRIPT_DIR="${0%/*}"
-DATA_FILE="$SCRIPT_DIR/data/quotes.json"
+# Check for data in SCRIPT_DIR (development/portable) or system locations (installed)
+if [[ -f "$SCRIPT_DIR/data/quotes.json" ]]; then
+  DATA_FILE="$SCRIPT_DIR/data/quotes.json"
+elif [[ -f "$HOME/.local/share/office-quotes-cli/data/quotes.json" ]]; then
+  DATA_FILE="$HOME/.local/share/office-quotes-cli/data/quotes.json"
+else
+  # Fallback to local if running from current dir
+  DATA_FILE="./data/quotes.json"
+fi
+
 API_BASE="https://officeapi.akashrajpurohit.com"
 
 show_help() {

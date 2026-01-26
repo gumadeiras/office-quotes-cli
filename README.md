@@ -61,17 +61,16 @@ $ office-quotes api json | jq '.character'
 ## Node.js Script Usage (`office-quotes.js`)
 
 ```bash
-# CLI usage (outputs JSON)
+# CLI usage
+node office-quotes.js                        # Random quote (JSON)
+node office-quotes.js count                  # Show total valid quotes
+node office-quotes.js search "bears"         # Search quotes
+node office-quotes.js list "Dwight"          # List quotes by character
+node office-quotes.js characters             # List all characters
+
+# API usage (Online)
 node office-quotes.js --mode api --theme dark --format svg
 
-# Output example:
-{
-  "quote": "Would I rather be feared or loved? Easy. Both.",
-  "character": "Michael Scott",
-  "imagePath": "/tmp/office_quote_123.svg",
-  "format": "svg",
-  "svgUrl": "..."
-}
 ```
 
 ### In Node.js Projects

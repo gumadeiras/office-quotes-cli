@@ -24,6 +24,12 @@ rm -f "${INSTALL_DIR}/${BIN_NAME}"
 cp "${TEMP_DIR}/office-quotes-cli/office-quotes" "${INSTALL_DIR}/${BIN_NAME}"
 chmod +x "${INSTALL_DIR}/${BIN_NAME}"
 
+# Install data files
+SHARE_DIR="${HOME}/.local/share/office-quotes-cli"
+mkdir -p "${SHARE_DIR}"
+rm -rf "${SHARE_DIR}/data"
+cp -r "${TEMP_DIR}/office-quotes-cli/data" "${SHARE_DIR}/"
+
 # Cleanup
 rm -rf "${TEMP_DIR}"
 
