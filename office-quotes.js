@@ -10,6 +10,7 @@ const API_BASE = "https://officeapi.akashrajpurohit.com";
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const { spawnSync } = require('child_process');
 
 // Check for Playwright
 let playwright;
@@ -186,8 +187,50 @@ async function fetchApiMetadata(type, identifier) {
   return await res.json();
 }
 
-async function renderWithPlaywright(svgPath, outputFormat) {
+function isMissingBrowserExecutableError(error) {
+  const message = error instanceof Error ? error.message : String(error);
+  return (
+    message.includes("Executable doesn't exist") ||
+    message.includes("browserType.launch") ||
+    message.includes("playwright install")
+  );
+}
+
+function installChromiumBrowser() {
+  const result = spawnSync("npx", ["playwright", "install", "chromium"], {
+    stdio: "inherit"
+  });
+
+  if (result.error) {
+    throw new Error(
+      `Chromium install failed: ${result.error.message}. Run 'npx playwright install chromium' and retry.`
+    );
+  }
+
+  if (result.status !== 0) {
+    throw new Error(
+      "Chromium install failed. Run 'npx playwright install chromium' and retry."
+    );
+  }
+}
+
+async function launchChromiumBrowser() {
   if (!playwright) throw new Error('Playwright not installed. Try: npm install playwright');
+
+  try {
+    return await playwright.chromium.launch();
+  } catch (error) {
+    if (!isMissingBrowserExecutableError(error)) {
+      throw error;
+    }
+
+    console.error("Chromium browser missing. Installing it now...");
+    installChromiumBrowser();
+    return playwright.chromium.launch();
+  }
+}
+
+async function renderWithPlaywright(svgPath, outputFormat) {
   const ext = outputFormat.toLowerCase();
 
   if (ext !== 'png' && ext !== 'jpg' && ext !== 'jpeg' && ext !== 'svg') {
@@ -205,7 +248,7 @@ async function renderWithPlaywright(svgPath, outputFormat) {
   </style></head><body>${svgContent}</body></html>`;
 
   fs.writeFileSync(htmlPath, htmlContent);
-  const browser = await playwright.chromium.launch();
+  const browser = await launchChromiumBrowser();
   try {
     const page = await browser.newPage({
       viewport: { width: 600, height: 400 },

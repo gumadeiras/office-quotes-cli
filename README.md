@@ -11,6 +11,12 @@ A simple CLI for *The Office* fans. Get instant access to 326 curated quotes off
 npm install -g office-quotes-cli
 ```
 
+**Homebrew:**
+```bash
+brew tap gumadeiras/tap
+brew install office-quotes-cli
+```
+
 **Fastest (Bash/Zsh One-liner):**
 ```bash
 curl -sSL https://raw.githubusercontent.com/gumadeiras/office-quotes-cli/master/install.sh | bash
@@ -30,6 +36,7 @@ office-quotes characters     # Who said what?
 ### 🌐 The "Fancy" Mode (API)
 Connect to the Dunder Mifflin cloud for cards and metadata.
 *Note: Image generation is only available for random quotes sourced from the API.*
+The first `--format` run installs Chromium automatically if it's missing.
 ```bash
 office-quotes --source api           # Fresh quote from the cloud
 office-quotes --format png           # Boom! PNG card (saved to /tmp/)
