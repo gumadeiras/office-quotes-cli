@@ -67,3 +67,10 @@ office-quotes --format jpg --theme light # For those who like the light mode
 *MIT License.*
 
 🐧
+
+## Release
+
+Tag pushes like `vX.Y.Z` run the release workflow: tests, package tarball,
+GitHub release, npm publish, and `gumadeiras/homebrew-tap` update.
+
+Release CI publishes to npm with trusted publishing.
