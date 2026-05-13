@@ -27,7 +27,8 @@
   "files": [
     "office-quotes.js",
     "data/quotes.json",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md"
   ],
   "type": "commonjs",
   "bugs": {
