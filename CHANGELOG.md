@@ -4,6 +4,7 @@
 
 ### Changes
 
+- Renamed the published npm and Homebrew package to `office-quotes`.
 - Added a local release wrapper for version sync, packaging, tagging, and release workflow verification.
 - Documented the local release wrapper in the repo agent guide.
 

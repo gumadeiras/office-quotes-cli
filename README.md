@@ -8,13 +8,13 @@ A simple CLI for *The Office* fans. Get instant access to 326 curated quotes off
 
 **Recommended (Node.js):**
 ```bash
-npm install -g office-quotes-cli
+npm install -g office-quotes
 ```
 
 **Homebrew:**
 ```bash
 brew tap gumadeiras/tap
-brew install office-quotes-cli
+brew install office-quotes
 ```
 
 **Fastest (Bash/Zsh One-liner):**
