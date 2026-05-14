@@ -43,43 +43,15 @@ jobs:
         run: npm ci
 
       - name: Check version files
-        run: |
-          node -e '
-            const fs = require("node:fs");
-            const version = process.env.OFFICE_QUOTES_RELEASE_VERSION;
-            const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
-            const lock = JSON.parse(fs.readFileSync("package-lock.json", "utf8"));
-            const errors = [];
-            if (pkg.version !== version) errors.push(`package.json version is ${pkg.version}, expected ${version}`);
-            if (lock.version !== version) errors.push(`package-lock.json version is ${lock.version}, expected ${version}`);
-            if (lock.packages?.[""]?.version !== version) errors.push(`package-lock root version is ${lock.packages?.[""]?.version}, expected ${version}`);
-            if (errors.length) {
-              for (const error of errors) console.error(`error: ${error}`);
-              process.exit(1);
-            }
-          '
+        run: ./scripts/sync-version.sh --check "$OFFICE_QUOTES_RELEASE_VERSION"
 
       - name: Run tests
         run: npm test -- --runInBand
 
       - name: Package release asset
         run: |
-          mkdir -p dist/release
+          ./scripts/package-release.sh --skip-build
           package_file="$(node -p 'const pkg=require("./package.json"); `${pkg.name.replace(/^@/, "").replace(/\//g, "-")}-${pkg.version}.tgz`')"
-          npm pack --pack-destination dist/release >/dev/null
-          test -f "dist/release/${package_file}"
-          (
-            cd dist/release
-            shasum -a 256 "$package_file" > SHA256SUMS.txt
-          )
-          smoke_dir="$(mktemp -d)"
-          trap 'rm -rf "$smoke_dir"' EXIT
-          npm install --global --prefix "$smoke_dir/prefix" "dist/release/${package_file}" >/dev/null
-          actual_version="$("$smoke_dir/prefix/bin/office-quotes" --version)"
-          if [ "$actual_version" != "$OFFICE_QUOTES_RELEASE_VERSION" ]; then
-            echo "packed office-quotes reports $actual_version, expected $OFFICE_QUOTES_RELEASE_VERSION" >&2
-            exit 1
-          fi
           echo "OFFICE_QUOTES_PACKAGE_FILE=$package_file" >> "$GITHUB_ENV"
 
       - name: Write release notes

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changes
+
+- Added a local release wrapper for version sync, packaging, tagging, and release workflow verification.
+
 ## 1.1.2 - 2026-05-14
 
 ### Fixes
