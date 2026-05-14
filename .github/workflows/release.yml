@@ -18,22 +18,19 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 22
-          cache: npm
+          node-version: 24
           registry-url: https://registry.npmjs.org
+          package-manager-cache: false
 
       - name: Derive release version
         run: |
           version="${GITHUB_REF_NAME#v}"
           echo "OFFICE_QUOTES_RELEASE_VERSION=$version" >> "$GITHUB_ENV"
-
-      - name: Update npm
-        run: npm install -g npm@latest
 
       - name: Check tap token
         run: |
@@ -75,6 +72,14 @@ jobs:
             cd dist/release
             shasum -a 256 "$package_file" > SHA256SUMS.txt
           )
+          smoke_dir="$(mktemp -d)"
+          trap 'rm -rf "$smoke_dir"' EXIT
+          npm install --global --prefix "$smoke_dir/prefix" "dist/release/${package_file}" >/dev/null
+          actual_version="$("$smoke_dir/prefix/bin/office-quotes" --version)"
+          if [ "$actual_version" != "$OFFICE_QUOTES_RELEASE_VERSION" ]; then
+            echo "packed office-quotes reports $actual_version, expected $OFFICE_QUOTES_RELEASE_VERSION" >&2
+            exit 1
+          fi
           echo "OFFICE_QUOTES_PACKAGE_FILE=$package_file" >> "$GITHUB_ENV"
 
       - name: Write release notes
@@ -118,10 +123,10 @@ jobs:
             exit 0
           fi
 
-          npm publish "dist/release/${OFFICE_QUOTES_PACKAGE_FILE}" --access public --provenance
+          npm publish "dist/release/${OFFICE_QUOTES_PACKAGE_FILE}" --access public
 
       - name: Check out Homebrew tap
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: gumadeiras/homebrew-tap
           token: ${{ env.TAP_TOKEN }}

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Fixes
+
+- Added real `--version` output for install verification.
+- Fixed release publishing to use the stable GitHub Actions Node toolchain.
+- Added release package install smoke coverage.
+
 ## 1.1.1 - 2026-04-25
 
 ### Fixes

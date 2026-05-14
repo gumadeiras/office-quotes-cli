@@ -21,6 +21,12 @@ describe('office-quotes (Node.js CLI Integration)', () => {
         expect(output.length).toBeGreaterThan(5);
     });
 
+    test('should report the package version', () => {
+        const output = execSync(`node ${NODE_SCRIPT} --version`).toString().trim();
+        const packageJson = require('../package.json');
+        expect(output).toBe(packageJson.version);
+    });
+
     test('should fetch episode metadata from API', () => {
         const output = execSync(`node ${NODE_SCRIPT} episode 1/1`).toString().trim();
         const json = JSON.parse(output);

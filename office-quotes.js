@@ -11,6 +11,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const { spawnSync } = require('child_process');
+const packageVersion = require('./package.json').version;
 
 // Check for Playwright
 let playwright;
@@ -37,6 +38,8 @@ function parseArgs(args) {
     const arg = args[i];
     if (arg === "-h" || arg === "--help") {
       showHelp = true;
+    } else if (arg === "-V" || arg === "--version") {
+      command = "version";
     } else if (arg === "-q" || arg === "--quiet") {
       quiet = true;
     } else if (arg === "--episode" && args[i + 1]) {
@@ -89,9 +92,11 @@ Commands:
   episode <S/E>       Get episode metadata (API, e.g., 3/10)
   season <S>          Get season metadata (API)
   help                Show this help
+  version             Show package version
 
 Options:
   -h, --help          Show this help
+  -V, --version       Show package version
   -q, --quiet         Output only the result text (not JSON)
   --source [local|api] Source to fetch from (default: local)
   --theme [dark|light] Theme for SVG (api mode with image only, default: dark)
@@ -351,7 +356,7 @@ async function main() {
   if (showHelp) return printHelp();
 
   try {
-    const VALID_COMMANDS = [null, "random", "shuffle", "list", "characters", "count", "search", "api", "episode", "season", "help"];
+    const VALID_COMMANDS = [null, "random", "shuffle", "list", "characters", "count", "search", "api", "episode", "season", "help", "version"];
     if (!VALID_COMMANDS.includes(command)) {
       throw new Error(`Unknown command: ${command}\nRun 'office-quotes --help' for usage`);
     }
@@ -361,6 +366,10 @@ async function main() {
       if (!quiet) console.error("⚠️  Note: Image generation (--format) is only available for quotes from the API. Ignoring image request for this command.");
     }
 
+    if (command === "version") {
+      console.log(packageVersion);
+      return;
+    }
     if (command === "episode") {
       const metadata = await fetchApiMetadata('episode', commandArgs[0]);
       console.log(JSON.stringify(metadata, null, 2));
