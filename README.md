@@ -8,7 +8,7 @@ A simple CLI for *The Office* fans. Get instant access to 326 curated quotes off
 
 **Recommended (Node.js):**
 ```bash
-npm install -g office-quotes
+npm install -g @gumadeiras/office-quotes
 ```
 
 **Homebrew:**
@@ -71,6 +71,7 @@ office-quotes --format jpg --theme light # For those who like the light mode
 ## Release
 
 Tag pushes like `vX.Y.Z` run the release workflow: tests, package tarball,
-GitHub release, npm publish, and `gumadeiras/homebrew-tap` update.
+GitHub release, npm publish to `@gumadeiras/office-quotes`, and
+`gumadeiras/homebrew-tap` update.
 
 Release CI publishes to npm with trusted publishing.
