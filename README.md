@@ -1,5 +1,8 @@
 # 🎬 office-quotes
 
+> This package has been renamed. Install `office-quotes` now:
+> `npm install -g office-quotes`
+
 > **"Dunder Mifflin, this is Pam."** 📞
 
 A simple CLI for *The Office* fans. Get instant access to 326 curated quotes offline, or hit the live API for beautiful SVG cards and metadata.

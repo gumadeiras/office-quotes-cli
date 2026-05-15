@@ -4,6 +4,7 @@
 
 ### Changes
 
+- Added the final `office-quotes-cli` release notice. Install `office-quotes` now.
 - Added a local release wrapper for version sync, packaging, tagging, and release workflow verification.
 - Documented the local release wrapper in the repo agent guide.
 
